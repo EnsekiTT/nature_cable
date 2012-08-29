@@ -46,8 +46,8 @@ void setup()
   //Output
   out = minim.getLineOut(Minim.STEREO);
   sine1 = new SineWave(0, 1.0, out.sampleRate());
-  sine2 = new SineWave(0, 0.7, out.sampleRate());
-  sine3 = new SineWave(0, 0.5, out.sampleRate());
+  sine2 = new SineWave(0, 0.98, out.sampleRate());
+  sine3 = new SineWave(0, 0.96, out.sampleRate());
   out.addSignal(sine1);
   out.addSignal(sine2);
   out.addSignal(sine3);
@@ -91,10 +91,11 @@ void draw()
   }
   color pix = old_img.get(x,y);
   println("get:" + red(pix) + "," + green(pix) + "," + blue(pix));
-  sine1.setFreq(6450);//map(247/*red(pix)*/ , 0, 255, 32, 16384));
-  sine2.setFreq(440);
-  //sine2.setFreq(map(215/*green(pix)*/ , 0, 255, 32, 16384)+3000);
-  //sine3.setFreq(map(176/*blue(pix)*/, 0, 255, 32, 16384)+6000);
+  sine1.setFreq(map(red(pix) , 0, 255, 440, 5930));
+  sine2.setFreq(map(green(pix) , 0, 255, 440, 5930));
+  sine3.setFreq(map(blue(pix), 0, 255, 440, 5930));
+  //sine1.setFreq(440);
+  //sine2.setFreq(5930);
   
   max1 = 0;
   max2 = 0;
@@ -105,33 +106,26 @@ void draw()
   fft.forward(in.mix);
   //stroke(256,0,0);
   for(int i = 0; i < fft.specSize(); i++){
-    line(i, height, i, height - fft.getBand(i));
-    if(i < 600 && i >= 0){
-      if(max1 < fft.getBand(i)){
-        max1 = fft.getBand(i);
-        maxf1 = i; 
-      }
-    }
-    if(i < 600 && i >= 301){
-      if(max2 < fft.getBand(i)){
-        max2 = fft.getBand(i);
-        maxf2 = i;
-      } 
-    }
-    if(i < 900 && i >= 601){
-      if(max3 < fft.getBand(i)){
-        max3 = fft.getBand(i);
-        maxf3 = i;
-      }
+    //line(i, height, i, height - fft.getBand(i));
+    if(max1 < fft.getBand(i)){
+      max3 = max2;
+      max2 = max1;
+      max1 = fft.getBand(i);
+      maxf3 = maxf2;
+      maxf2 = maxf1;
+      maxf1 = i;
     }
   }
-  println("set: " + maxf1 + "," + (maxf2 - 300) + "," + (maxf3 - 600));
+  println("set: " + (maxf1-20) + "," + (maxf2 - 20) + "," + (maxf3 - 20));
   
-  color newpix = color(maxf1, maxf2-300, maxf3-600);
+  color newpix = color(maxf1-20, maxf2-20, maxf3-20);
   
   stroke(newpix);
   point(left + x, top + y);
-
+  fill(pix);
+  rect(0, 0, 30, 30);
+  fill(newpix);
+  rect(30, 0, 30, 30);
   /*
   if( recorder.isRecording() ){
     text("Currently recording...", 5, 15);
