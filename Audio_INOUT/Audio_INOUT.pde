@@ -28,14 +28,14 @@ FFT fft;
 void setup()
 {
   //frame Rate
-  frameRate(120);
+  frameRate(5);
   
   //Both
   minim = new Minim(this);
   size(640, 480);
   
   //LoadImage
-  old_img = loadImage("20111123200001.jpg");
+  old_img = loadImage("03448x.jpg");
   noStroke();
   smooth();
   background(255);
@@ -45,15 +45,15 @@ void setup()
 
   //Output
   out = minim.getLineOut(Minim.STEREO);
-  sine1 = new SineWave(24000, 0.7, out.sampleRate());
-  sine2 = new SineWave(28000, 0.5, out.sampleRate());
-  sine3 = new SineWave(32000, 0.3, out.sampleRate());
+  sine1 = new SineWave(0, 1.0, out.sampleRate());
+  sine2 = new SineWave(0, 0.7, out.sampleRate());
+  sine3 = new SineWave(0, 0.5, out.sampleRate());
   out.addSignal(sine1);
   out.addSignal(sine2);
   out.addSignal(sine3);
   
   //Input
-  in = minim.getLineIn(Minim.STEREO, 511);
+  in = minim.getLineIn(Minim.STEREO, 2048);
   
   //Record
   recorder = minim.createRecorder(in, "myrecording.wav", true);
@@ -79,9 +79,9 @@ void draw()
   //int y = int(random(old_img.height));
   int x = count_row;
   int y = count_col;
-  if(count_row > int(left + old_img.width)){
+  if(count_row >= old_img.width-1){
     count_row = 0;
-    if(count_col > int(top + old_img.height)){
+    if(count_col >= old_img.height-1){
       count_col = 0;
     }else{
       count_col++;
@@ -90,39 +90,48 @@ void draw()
     count_row++; 
   }
   color pix = old_img.get(x,y);
-  //println(red(pix) + "," + green(pix) + "," + blue(pix));
+  println("get:" + red(pix) + "," + green(pix) + "," + blue(pix));
+  sine1.setFreq(6450);//map(247/*red(pix)*/ , 0, 255, 32, 16384));
+  sine2.setFreq(440);
+  //sine2.setFreq(map(215/*green(pix)*/ , 0, 255, 32, 16384)+3000);
+  //sine3.setFreq(map(176/*blue(pix)*/, 0, 255, 32, 16384)+6000);
+  
   max1 = 0;
   max2 = 0;
   max3 = 0;
   maxf1 = 0;
   maxf2 = 0;
   maxf3 = 0;
-  
   fft.forward(in.mix);
   //stroke(256,0,0);
-  println(fft.specSize());
   for(int i = 0; i < fft.specSize(); i++){
-    line(i*2, height, i*2, height - fft.getBand(i)*2);
-    if(max3 < fft.getBand(i)){
+    line(i, height, i, height - fft.getBand(i));
+    if(i < 600 && i >= 0){
+      if(max1 < fft.getBand(i)){
+        max1 = fft.getBand(i);
+        maxf1 = i; 
+      }
+    }
+    if(i < 600 && i >= 301){
       if(max2 < fft.getBand(i)){
-        if(max1 < fft.getBand(i)){
-          max1 = fft.getBand(i);
-          maxf1 = i;
-        }else{
-          max2 = fft.getBand(i); 
-          maxf2 = i;
-        }
-      }else{
-        max3 = fft.getBand(i); 
+        max2 = fft.getBand(i);
+        maxf2 = i;
+      } 
+    }
+    if(i < 900 && i >= 601){
+      if(max3 < fft.getBand(i)){
+        max3 = fft.getBand(i);
         maxf3 = i;
       }
     }
   }
-  //println("R" + maxf1 + ",G" + maxf2 + ",B" + maxf3);
-  color newpix = color(maxf1, maxf2, maxf3);
+  println("set: " + maxf1 + "," + (maxf2 - 300) + "," + (maxf3 - 600));
+  
+  color newpix = color(maxf1, maxf2-300, maxf3-600);
   
   stroke(newpix);
   point(left + x, top + y);
+
   /*
   if( recorder.isRecording() ){
     text("Currently recording...", 5, 15);
@@ -164,7 +173,6 @@ void keyReleased(){
 
 void stop(){
   in.close();
-  out.close();
   minim.stop();
   super.stop();
 }
