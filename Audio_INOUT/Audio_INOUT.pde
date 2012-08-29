@@ -18,6 +18,9 @@ int count_row, count_col;
 float max1;
 float max2;
 float max3;
+int maxf1;
+int maxf2;
+int maxf3;
 
 AudioRecorder recorder;
 FFT fft;
@@ -42,15 +45,15 @@ void setup()
 
   //Output
   out = minim.getLineOut(Minim.STEREO);
-  sine1 = new SineWave(440, 0.7, out.sampleRate());
-  sine2 = new SineWave(880, 0.5, out.sampleRate());
-  sine3 = new SineWave(1760, 0.3, out.sampleRate());
+  sine1 = new SineWave(24000, 0.7, out.sampleRate());
+  sine2 = new SineWave(28000, 0.5, out.sampleRate());
+  sine3 = new SineWave(32000, 0.3, out.sampleRate());
   out.addSignal(sine1);
   out.addSignal(sine2);
   out.addSignal(sine3);
   
   //Input
-  in = minim.getLineIn(Minim.STEREO, 512);
+  in = minim.getLineIn(Minim.STEREO, 511);
   
   //Record
   recorder = minim.createRecorder(in, "myrecording.wav", true);
@@ -91,35 +94,32 @@ void draw()
   max1 = 0;
   max2 = 0;
   max3 = 0;
-  
-  //Wave Output
-  /*
-  background(0);
-  stroke(255);
-  for(int i = 0; i < in.left.size()-1; i++){
-    line(i, 50 + in.left.get(i)*50, i+1, 50 + in.left.get(i+1)*50);
-    line(i, 150 + in.right.get(i)*50, i+1, 150 + in.right.get(i+1)*50);
-  }
-  */
+  maxf1 = 0;
+  maxf2 = 0;
+  maxf3 = 0;
   
   fft.forward(in.mix);
   //stroke(256,0,0);
+  println(fft.specSize());
   for(int i = 0; i < fft.specSize(); i++){
     line(i*2, height, i*2, height - fft.getBand(i)*2);
     if(max3 < fft.getBand(i)){
       if(max2 < fft.getBand(i)){
         if(max1 < fft.getBand(i)){
           max1 = fft.getBand(i);
+          maxf1 = i;
         }else{
           max2 = fft.getBand(i); 
+          maxf2 = i;
         }
       }else{
         max3 = fft.getBand(i); 
+        maxf3 = i;
       }
     }
   }
-  //println("R" + max1*4 + ",G" + max2*4 + ",B" + max3*4);
-  color newpix = color(max1*4, max2*4, max3*4);
+  //println("R" + maxf1 + ",G" + maxf2 + ",B" + maxf3);
+  color newpix = color(maxf1, maxf2, maxf3);
   
   stroke(newpix);
   point(left + x, top + y);
